@@ -1,6 +1,6 @@
 // @flow
 
-import type {Serial} from '../Serial';
+import type {Serial, Chapter} from '../Serial';
 
 import fetch from 'node-fetch';
 import {fetchDocument, serialize} from './util';
@@ -23,27 +23,27 @@ async function getLinks() {
     return result;
 }
 
-export default async function fetch(): Promise<Serial> {
-    const contents = [];
+const serial: Serial = async () => {
     const links = await getLinks();
-    for (let [index, [link, title]] of links.entries()) {
-        const page = await fetchDocument(link);
-        const contentNode = page.querySelector('div.entry-content');
-        const output = [];
-        for (let child of contentNode.childNodes) {
-            if (child.tagName && child.querySelector('span') && child.querySelector('span').rawText === 'Advertisements') {
-                break;
-            }
-            output.push(serialize(child).trim());
-        }
-        contents.push({title, text: output.join('')});
-    }
     return {
         title: 'A Practical Guide to Evil',
         author: 'erraticerrata',
         source: 'https://practicalguidetoevil.wordpress.com/',
         // TODO: parse description from landing page
         description: null,
-        contents,
+        chapters: links.map(([link, title]) => (async () => {
+            const page = await fetchDocument(link);
+            const contentNode = page.querySelector('div.entry-content');
+            const text = [];
+            for (let child of contentNode.childNodes) {
+                if (child.tagName && child.querySelector('span') && child.querySelector('span').rawText === 'Advertisements') {
+                    break;
+                }
+                text.push(serialize(child).trim());
+            }
+            return {title, text: text.join('')};
+        })),
     };
-}
+};
+
+export default serial;

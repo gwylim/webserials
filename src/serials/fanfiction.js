@@ -9,7 +9,7 @@ import {fetchDocument, serialize} from './util';
 
 type FictionSite = 'fanfiction.net' | 'fictionpress.com';
 
-export default function fanfiction(site: FictionSite, id: string): () => Promise<Serial> {
+export default function fanfiction(site: FictionSite, id: string): Serial {
     const source = 'https://www.' + site + '/s/' + id;
     return async function() {
         const response = await fetch(source);
@@ -21,21 +21,25 @@ export default function fanfiction(site: FictionSite, id: string): () => Promise
         const description = mainPage.querySelector('#profile_top div.xcontrast_txt').rawText;
         const chapterSelect = mainPage.querySelector('#chap_select');
         const options = chapterSelect.querySelectorAll('option');
-        const contents = [];
-        for (let option of options) {
-            const page = await fetchDocument(source + '/' + option.attributes['value']);
-            const contentNode = page.querySelector('div.storytext');
-            const output = [];
-            let onTitle = true;
-            for (let child of contentNode.childNodes) {
-                if (onTitle && child.querySelector('strong')) {
-                    continue;
+        return {
+            title,
+            author,
+            source,
+            description,
+            chapters: options.map((option) => (async () => {
+                const page = await fetchDocument(source + '/' + option.attributes['value']);
+                const contentNode = page.querySelector('div.storytext');
+                const text = [];
+                let onTitle = true;
+                for (let child of contentNode.childNodes) {
+                    if (onTitle && child.querySelector('strong')) {
+                        continue;
+                    }
+                    onTitle = false;
+                    text.push(serialize(child).trim());
                 }
-                onTitle = false;
-                output.push(serialize(child).trim());
-            }
-            contents.push({title: option.text, text: output.join('')});
-        }
-        return {title, author, source, description, contents};
+                return {title: option.text, text: text.join('')};
+            })),
+        };
     };
 }

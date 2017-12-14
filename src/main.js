@@ -8,20 +8,23 @@ import type {Serial} from './Serial';
 import fanfiction from './serials/fanfiction';
 import a_practical_guide_to_evil from './serials/a_practical_guide_to_evil';
 
-const serials = {
+const serials: { [string]: Serial } = {
     'practicalguidetoevil': a_practical_guide_to_evil,
 };
 
-async function scrape(fetchSerial: () => Promise<Serial>) {
-    const serial = await fetchSerial();
+async function scrape(fetch: Serial) {
+    const serial = await fetch();
+    console.error(serial.title + ', ' + serial.author);
     const epub = new Streampub({title: serial.title, author: serial.author, source: serial.source});
     epub.pipe(fs.createWriteStream(serial.title + '.epub'));
-    // TODO: show progress for fetching
-    for (let [index, {title, text}] of serial.contents.entries()) {
+    for (let [index, chapter] of serial.chapters.entries()) {
+        let {title, text} = await chapter();
         if (title == null) {
             title = 'Chapter ' + (index + 1);
         }
         epub.write(Streampub.newChapter(title, '<h1>' + title + '</h1>' + text));
+        // TODO: use progress bar
+        console.error('Fetched ' + (index + 1) + '/' + serial.chapters.length + ' chapters');
     }
     epub.end();
 }

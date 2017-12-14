@@ -1,15 +1,15 @@
 /* @flow */
 
 // Represents a web serial
-export type Serial = {
+export type Serial = () => Promise<{
     title: string,
     author: string,
     source: string,
     description: ?string,
-    contents: Array<Chapter>,
-}
+    chapters: Array<() => Promise<Chapter>>,
+}>;
 
 export type Chapter = {
     title: ?string,
     text: string,
-}
+};
