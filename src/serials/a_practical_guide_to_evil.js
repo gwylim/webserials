@@ -23,31 +23,27 @@ async function getLinks() {
     return result;
 }
 
-const serial: Serial = {
-    title: 'A Practical Guide to Evil',
-    author: 'erraticerrata',
-    source: 'https://practicalguidetoevil.wordpress.com/',
-    finished: false,
-    async fetch() {
-        const chapters = [];
-        const links = await getLinks();
-        for (let [index, [link, title]] of links.entries()) {
-            const page = await fetchDocument(link);
-            const contentNode = page.querySelector('div.entry-content');
-            const output = [];
-            for (let child of contentNode.childNodes) {
-                if (child.tagName && child.querySelector('span') && child.querySelector('span').rawText === 'Advertisements') {
-                    break;
-                }
-                const text = serialize(child).trim();
-                if (text) {
-                    output.push(text);
-                }
+export default async function fetch(): Promise<Serial> {
+    const contents = [];
+    const links = await getLinks();
+    for (let [index, [link, title]] of links.entries()) {
+        const page = await fetchDocument(link);
+        const contentNode = page.querySelector('div.entry-content');
+        const output = [];
+        for (let child of contentNode.childNodes) {
+            if (child.tagName && child.querySelector('span') && child.querySelector('span').rawText === 'Advertisements') {
+                break;
             }
-            chapters.push({title, text: output.join('')});
+            output.push(serialize(child).trim());
         }
-        return {description: null, contents: chapters};
-    },
+        contents.push({title, text: output.join('')});
+    }
+    return {
+        title: 'A Practical Guide to Evil',
+        author: 'erraticerrata',
+        source: 'https://practicalguidetoevil.wordpress.com/',
+        // TODO: parse description from landing page
+        description: null,
+        contents,
+    };
 }
-
-export default serial;

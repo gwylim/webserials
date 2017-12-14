@@ -1,14 +1,23 @@
 // @flow
 
-const Streampub = require('streampub');
-const fs = require('fs');
-import apgte from './serials/a_practical_guide_to_evil';
+import Streampub from 'streampub';
+import fs from 'fs';
 
-async function main() {
-    const epub = new Streampub({title: apgte.title, author: apgte.author, source: apgte.source});
-    epub.pipe(fs.createWriteStream(apgte.title + '.epub'));
-    const {description, contents} = await apgte.fetch();
-    for (let [index, {title, text}] of contents.entries()) {
+import type {Serial} from './Serial';
+
+import fanfiction from './serials/fanfiction';
+import a_practical_guide_to_evil from './serials/a_practical_guide_to_evil';
+
+const serials = {
+    'practicalguidetoevil': a_practical_guide_to_evil,
+};
+
+async function scrape(fetchSerial: () => Promise<Serial>) {
+    const serial = await fetchSerial();
+    const epub = new Streampub({title: serial.title, author: serial.author, source: serial.source});
+    epub.pipe(fs.createWriteStream(serial.title + '.epub'));
+    // TODO: show progress for fetching
+    for (let [index, {title, text}] of serial.contents.entries()) {
         if (title == null) {
             title = 'Chapter ' + (index + 1);
         }
@@ -17,4 +26,11 @@ async function main() {
     epub.end();
 }
 
-main();
+// TODO: Use argparse to implement proper argument handling
+if (process.argv[2] === 'fanfiction') {
+    scrape(fanfiction('fanfiction.net', process.argv[3]));
+} else if (process.argv[2] === 'fictionpress') {
+    scrape(fanfiction('fictionpress.com', process.argv[3]));
+} else {
+    scrape(serials[process.argv[2]]);
+}
