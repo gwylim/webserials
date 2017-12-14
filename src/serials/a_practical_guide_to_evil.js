@@ -3,7 +3,7 @@
 import type {Serial, Chapter} from '../Serial';
 
 import fetch from 'node-fetch';
-import {fetchDocument, serialize} from './util';
+import {wordpressPage} from './util';
 import Streampub from 'streampub';
 import fs from 'fs';
 
@@ -18,7 +18,7 @@ async function getLinks() {
     let match;
     const result = [];
     while ((match = exp.exec(html)) !== null) {
-        result.push([match[1], match[2]]);
+        result.push({uri: match[1], title: match[2]});
     }
     return result;
 }
@@ -31,18 +31,7 @@ const serial: Serial = async () => {
         source: 'https://practicalguidetoevil.wordpress.com/',
         // TODO: parse description from landing page
         description: null,
-        chapters: links.map(([link, title]) => (async () => {
-            const page = await fetchDocument(link);
-            const contentNode = page.querySelector('div.entry-content');
-            const text = [];
-            for (let child of contentNode.childNodes) {
-                if (child.tagName && child.querySelector('span') && child.querySelector('span').rawText === 'Advertisements') {
-                    break;
-                }
-                text.push(serialize(child).trim());
-            }
-            return {title, text: text.join('')};
-        })),
+        chapters: links.map(wordpressPage),
     };
 };
 

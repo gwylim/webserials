@@ -6,10 +6,12 @@ import fs from 'fs';
 import type {Serial} from './Serial';
 
 import fanfiction from './serials/fanfiction';
-import a_practical_guide_to_evil from './serials/a_practical_guide_to_evil';
+import practicalguidetoevil from './serials/a_practical_guide_to_evil';
+import sidewaysinhyperspace from './serials/sideways_in_hyperspace';
 
 const serials: { [string]: Serial } = {
-    'practicalguidetoevil': a_practical_guide_to_evil,
+    practicalguidetoevil,
+    sidewaysinhyperspace,
 };
 
 async function scrape(fetch: Serial) {
