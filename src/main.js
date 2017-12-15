@@ -6,8 +6,8 @@ import fs from 'fs';
 import type {Serial} from './Serial';
 
 import fanfiction from './serials/fanfiction';
-import practicalguidetoevil from './serials/a_practical_guide_to_evil';
-import sidewaysinhyperspace from './serials/sideways_in_hyperspace';
+import practicalguidetoevil from './serials/practicalguidetoevil';
+import sidewaysinhyperspace from './serials/sidewaysinhyperspace';
 
 const serials: { [string]: Serial } = {
     practicalguidetoevil,
